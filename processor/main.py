@@ -1,28 +1,15 @@
-# Cell 1, Imports
-
 import os
 from google.cloud import storage
 from google.cloud import bigquery
 import pandas as pd
 import json
 
-
-credentials_path = r"C:\sample-processor\credentials\sample-data-processor-2d8488c675a5.json"
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-
-# Verify the path
-if os.path.exists(credentials_path):
-    print(f"✓ Credentials file found at: {credentials_path}")
-else:
-    print(f"❌ No file found at: {credentials_path}")
-
-# Cell 2, main scripts
-
 class MarketplaceDataProcessor:
-    def __init__(self, project_id, bucket_name):
+    def __init__(self, project_id, bucket_name, credentials_path):
         """Initialize processor with project and bucket names"""
         self.project_id = project_id
         self.bucket_name = bucket_name
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
         self.storage_client = storage.Client()
         self.bq_client = bigquery.Client()
         
@@ -84,7 +71,7 @@ class MarketplaceDataProcessor:
             lambda x: float(json.loads(x).get('currencyValueDecimal', 0))
         )
         
-        # Aggregate Data
+        # Aggregate data
         result = df.groupby(['date', 'project_id']).agg({
             'currency_value': ['count', 'sum']
         }).reset_index()
@@ -106,29 +93,26 @@ class MarketplaceDataProcessor:
         job.result()
         print(f"Loaded {len(df)} rows into {table_id}")
 
+def main():
+    config = {
+        'project_id': 'sample-data-processor',
+        'bucket_name': 'sample-data-processor-bucket',
+        'credentials_path': 'config/credentials.json',
+        'data_path': 'data/sample_data.csv'
+    }
+    
+    processor = MarketplaceDataProcessor(
+        config['project_id'],
+        config['bucket_name'],
+        config['credentials_path']
+    )
+    
+    # Setup and process
+    processor.setup_gcs()
+    gcs_path = processor.upload_to_gcs(config['data_path'])
+    table_id = processor.setup_bigquery()
+    processed_df = processor.process_data(config['data_path'])
+    processor.load_to_bigquery(processed_df, table_id)
 
-# Cell 3, Configuration
-PROJECT_ID = 'sample-data-processor'  # Your project ID
-BUCKET_NAME = f"{PROJECT_ID}-bucket"
-LOCAL_CSV = 'C:\sample-processor\data\sample_data.csv'  # Relative path to your CSV
-
-# Initialize processor
-processor = MarketplaceDataProcessor(PROJECT_ID, BUCKET_NAME)
-
-# Step 1: Setup infrastructure
-print("Setting up infrastructure...")
-processor.setup_gcs()
-gcs_path = processor.upload_to_gcs(LOCAL_CSV)
-table_id = processor.setup_bigquery()
-
-# Step 2: Process and load data
-print("\nProcessing data...")
-processed_df = processor.process_data(LOCAL_CSV)
-
-# Preview the processed data
-print("\nProcessed Data Preview:")
-display(processed_df.head())
-
-# Step 3: Load to BigQuery
-print("\nLoading to BigQuery...")
-processor.load_to_bigquery(processed_df, table_id)
+if __name__ == "__main__":
+    main()
