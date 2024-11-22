@@ -3,11 +3,9 @@ from datetime import datetime
 import logging
 import os
 import sys
+import yaml
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from processor.main import setup_coingecko_conversion_dynamic
-
-# Setup
+# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -18,11 +16,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from processor.price_processor import setup_coingecko_conversion
+
 def daily_price_update():
     """Daily price update job"""
     try:
         logger.info(f"Starting daily price update for {datetime.now().date()}")
-        setup_coingecko_conversion_dynamic()
+        
+        # Load config
+        with open('config/config.yaml', 'r') as f:
+            yaml_config = yaml.safe_load(f)
+        
+        # Convert yaml config to script format
+        config = {
+            'project_id': yaml_config['project']['id'],
+            'bucket_name': yaml_config['project']['bucket_name'],
+            'data_path': yaml_config['data']['path']
+        }
+        
+        # Set credentials
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = yaml_config['credentials']['path']
+        
+        # Run price update
+        setup_coingecko_conversion(config)
         logger.info("Daily price update completed successfully")
     except Exception as e:
         logger.error(f"Error in daily price update: {str(e)}")
@@ -30,7 +48,7 @@ def daily_price_update():
 def main():
     scheduler = BlockingScheduler()
     
-    # 1am UTC
+    # Schedule job to run at 1 AM UTC
     scheduler.add_job(
         daily_price_update,
         'cron',
