@@ -1,0 +1,11 @@
+project:
+  id: "sample-data-processor"
+  bucket_name: "sample-data-processor-bucket"
+  region: "US"
+
+credentials:
+  path: "config/credentials.json"
+
+bigquery:
+  dataset: "marketplace_analytics"
+  table: "daily_metrics"
