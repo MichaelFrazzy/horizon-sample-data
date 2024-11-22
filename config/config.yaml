@@ -9,3 +9,6 @@ credentials:
 bigquery:
   dataset: "marketplace_analytics"
   table: "daily_metrics"
+
+data:
+  path: "data/sample_data.csv"
