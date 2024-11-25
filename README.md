@@ -94,3 +94,112 @@ The validation utility script ensures both that setup/loading was successful wit
 - Project-level aggregation
 - Total transactions per project
 - Total USD volume per project
+
+
+## Pipeline Process Details
+
+### 1. Initial Data Processing
+The pipeline begins with `main.py`, which:
+- Validates and reads the CSV data
+- Extracts required fields:
+  - Timestamp (`ts`)
+  - Project ID
+  - Currency symbol from `props` JSON
+  - Transaction value from `nums` JSON
+- Aggregates transactions by date and project
+- Creates the initial BigQuery table structure
+
+### 2. Price Conversion Process
+`price_conversion.py` handles cryptocurrency conversion:
+- Identifies unique currency symbols (MATIC, SFL, USDC, USDC.E)
+- Fetches historical prices from CoinGecko API
+- Handles special cases:
+  - MATIC values are converted from wei (division by 1e18)
+  - USDC/USDC.E maintain 1:1 USD value
+- Stores prices in GCP bucket for future reference
+- Updates BigQuery with USD values
+
+### 3. Data Storage
+The BigQuery table structure:
+```sql
+CREATE TABLE marketplace_analytics.daily_metrics (
+    date DATE NOT NULL,
+    project_id INTEGER NOT NULL,
+    num_transactions INTEGER NOT NULL,
+    usd_volume FLOAT NOT NULL
+)
+
+```
+
+### 4. Scheduling and Updates
+The scheduler `scheduler.py`:
+
+- Runs daily at 1 AM UTC
+- Fetches new prices from CoinGecko
+- Updates USD values in BigQuery
+- Maintains price history in GCP bucket
+- Logs all activities for monitoring
+
+
+## Detailed Setup Instructions
+### 1. GCP Project Setup
+  1. Create a new project through the Google Cloud console
+  2. Ensure required APIs are enabled:
+     - BigQuery API
+     - Cloud Storage API
+  3. Create service account
+     - IAM & Admin > Service Accounts
+     - Create new service account
+     - Add required roles:
+       - BigQuery Admin
+       - Storage Admin
+       - Service Account User
+  4. Download credentials JSON file
+  5. Place in `config/credentials.json` or alter pathing to preferred location
+
+### 2. Configuration Setup
+
+1. Copy sample config:
+      
+```bash
+cp config/config.yaml.example config/config.yaml
+```
+
+2. Update configuration values if using different warehouse
+      
+```yaml 
+project:
+  id: "your-project-id"
+  bucket_name: "your-bucket-name"
+  region: "US"
+
+credentials:
+  path: "config/credentials.json"
+
+bigquery:
+  dataset: "marketplace_analytics"
+  table: "daily_metrics"
+
+data:
+  path: "data/sample_data.csv"
+```
+
+### 3. Envirorment Setup
+
+1. Create Python virtual envirorment:
+
+```bash
+python -m venv venv
+source venv\bin\activate  # venv/Scripts/activate for Windows
+```
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Verify setup:
+
+```bash
+python src/utils/validation.py
+```
