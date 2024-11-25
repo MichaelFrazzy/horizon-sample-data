@@ -203,3 +203,115 @@ pip install -r requirements.txt
 ```bash
 python src/utils/validation.py
 ```
+## Monitoring and Maintenance
+
+### Logging
+- All components write to their respective logs
+- Scheduler logs in `price_updates.log`
+- API endpoint logs to console
+
+### Data Validation
+The `validation.py` script includes an initial query to conduct regular validation checks of the initial loading and config process. It's 2nd query output  totals in USD to confirm final data outputs once setup and normalization is complete.
+
+Regular validation checks:
+
+1. Run validation utility to verify:
+
+   ```bash
+   python src/utils/validation.py
+   ```
+2. Check for:
+- Null USD values
+- Transaction count accuracy
+- Price update success
+- Data consistency
+
+## Common Issues and Their Solutions
+
+### 1. CoinGecko Basic API Rate Limits
+- Built-in delay between requests (1.2 seconds)
+- Price caching in GCP bucket
+- Fallback to last known/stored prices if needed
+
+### 2. BigQuery Updates
+- Automatic retry on failure
+- Transaction logging for debugging
+- Validation checks after updates
+
+### 3. Missing Prices
+- System falls back to last known price
+- Logs warning for manual review
+- Maintains price history in GCP bucket
+
+## Development and Testing
+
+### Running Tests
+
+```bash
+python src/utils/validation.py
+```
+
+As mentioned a section above, this script both validates the setup process and final output. The 2nd query during this final verification validates:
+- Data integrity
+- Volume price conversions
+- Transaction and/or date count
+- USD calculations
+
+## Local Reproduction
+
+**1. Set up local envirorment:**
+   
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**2. Use `sample_data.csv` under data directory for testing**
+  
+**3. Monitor logs for issues:**
+   - Check `price_updates.log`
+   - Review BigQuery logs
+   - Monitor API endpoint responses
+
+## Scheduler Deployment
+
+**1. Set up scheduled job script:**
+
+```bash
+python src/processor/scheduler.py
+```
+
+**2. Configure logging:**
+- Set appropriate log levels
+- Define schedule
+- Monitor usage
+
+
+**3. Monitor:**
+- API endpoint health
+- Price update success
+- Data consistency
+- Resource usage
+
+## Data Flow Order
+
+**1. Initial Processing:**
+- CSV → GCP Bucket
+- Raw data → BigQuery
+- JSON field extraction
+
+**2. Price Conversion:**
+- CoinGecko API calls
+- Price storage in GCP
+- USD value calculation
+
+**3. Daily Updates:**
+- Scheduled price fetching
+- BigQuery updates
+- Validation checks
+
+**4. Data Access:**
+- API endpoints
+- BigQuery queries
+- Validation tool
