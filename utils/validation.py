@@ -4,7 +4,7 @@ import yaml
 
 class DataValidator:
     def __init__(self):
-        """Initialize validator with config"""
+        """Initialize validator using config"""
         # Load config
         with open('config/config.yaml', 'r') as f:
             config = yaml.safe_load(f)
@@ -31,7 +31,7 @@ class DataValidator:
             return False
     
     def verify_data(self):
-        """Verify data quality"""
+        """Verify output"""
         query = f"""
         SELECT 
             COUNT(*) as total_rows,
@@ -54,11 +54,40 @@ class DataValidator:
             print(f"❌ Data validation failed: {str(e)}")
             return False
 
+    # Output function
+    def display_results(self):
+        """Display final project totals and volumes"""
+        query = f"""
+        SELECT 
+            project_id,
+            currency_symbol,
+            COUNT(*) as total_transactions,
+            ROUND(SUM(usd_volume), 2) as total_project_volume
+        FROM `{self.project_id}.marketplace_analytics.daily_metrics`
+        GROUP BY project_id, currency_symbol
+        ORDER BY project_id, currency_symbol
+        """
+        
+        try:
+            results = self.client.query(query).result()
+            print("\nFinal Project Results:")
+            print("----------------------")
+            for row in results:
+                print(f"Project {row.project_id} - {row.currency_symbol}:")
+                print(f"  Transactions: {row.total_transactions}")
+                print(f"  Total Volume: ${row.total_project_volume:,.2f}")
+            return True
+        except Exception as e:
+            print(f"❌ Error displaying results: {str(e)}")
+            return False
+            
 def run_validation():
     validator = DataValidator()
     setup_ok = validator.verify_setup()
     data_ok = validator.verify_data()
-    return setup_ok and data_ok
+    print("\nDisplaying final results...")  # Output lines
+    results_ok = validator.display_results()  
+    return setup_ok and data_ok and results_ok  
 
 if __name__ == "__main__":
     run_validation()
