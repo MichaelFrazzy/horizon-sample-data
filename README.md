@@ -16,14 +16,14 @@ This pipeline:
 - Python 3.8+
 - Google Cloud Platform account
 - GCP Project with BigQuery and Cloud Storage enabled
-- Service account with appropriate permissions:
+- Service account with appropriate roles:
   - BigQuery Admin
   - Storage Admin
   - Service Account User
 
 ## Installation
 
-1. Fork or clone the repository:
+1. Fork or clone this repository:
 ```bash
 git clone https://github.com/MichaelFrazzy/horizon-sample-data.git
 cd horizon-sample-data
@@ -46,7 +46,7 @@ cd horizon-sample-data
 
 **Functions:**
 
-- Create GCP buckets (if needed)
+- Create GCP buckets
 - Upload CSV data
 - Create BigQuery dataset and table
 - Process and load initial data
@@ -74,14 +74,14 @@ cd horizon-sample-data
 
 `python src/processor/scheduler.py`
 
-Runs price updates daily at 1am UTC. Output is constant due to the fixed dates of the current sample data, in other circumstances price updates would be fetched.
+Runs price updates daily at 1am UTC. Output is constant due to the fixed dates of the current sample data, in other circumstances price updates would be fetched and added to log.
 
 
 ## Data Validation
 
 `python src/utils/validation.py`
 
-The validation utility script ensures both that setup/loading was successful without unexpected null values, while also outputting the final USD volume totals of each project id. As part of testing an additional daily-volumes endpoint has been added to provide further summary stats as needed. The two endpoints queried include:
+The validation utility script ensures both that setup and loading were successful without unexpected null values or other issues, while also outputting the final USD volume totals of each project id. As part of testing an additional daily-volumes endpoint has been added to provide further summary stats as needed. The two endpoints queried include:
 
 1. /daily-volumes
 
@@ -211,7 +211,7 @@ python src/utils/validation.py
 - API endpoint logs to console
 
 ### Data Validation
-The `validation.py` script includes an initial query to conduct regular validation checks of the initial loading and config process. It's 2nd query output  totals in USD to confirm final data outputs once setup and normalization is complete.
+The `validation.py` script includes an initial query to conduct regular validation checks of the initial loading and config process. It's 2nd query outputs  totals in USD to confirm final data outputs once setup and normalization is complete.
 
 Regular validation checks:
 
