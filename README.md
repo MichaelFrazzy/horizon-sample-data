@@ -34,8 +34,8 @@ cd horizon-sample-data
 `pip install -r requirements.txt`
 
 3. Set up configuration:
-
-- Place your GCP service account credentials JSON file in config/credentials.json
+- Download your credentials JSON file from your service account
+- Place your GCP service account credentials JSON file in `config/credentials.json`
 - Update config/config.yaml with your project details and pathing if needed
 
 ## Usage
