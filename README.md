@@ -25,8 +25,8 @@ This pipeline:
 
 1. Fork or clone the repository:
 ```bash
-git clone [repository-url]
-cd blockchain-data-aggregator
+git clone https://github.com/MichaelFrazzy/horizon-sample-data.git
+cd horizon-sample-data
 ```
 
 2. Install required packages:
